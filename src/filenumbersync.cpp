@@ -29,7 +29,7 @@ void FileNumberSync::decrement() {
 unsigned long long FileNumberSync::fileValue() {
     std::ifstream file(filepath);
     if(!file.is_open()) {
-        std::cerr << "Could not open fileNumberSync file at " << filepath << "\n";
+        throw std::runtime_error("Could not open fileNumberSync file");
         return 0;
     }
 
@@ -46,7 +46,7 @@ void FileNumberSync::writeCheck() {
 
     std::ofstream file(filepath);
     if(!file.is_open()) {
-        std::cerr << "Could not open fileNumberSync file at " << filepath << "\n";
+        throw std::runtime_error("Could not open fileNumberSync file");
         return;
     }
 

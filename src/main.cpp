@@ -2,6 +2,7 @@
 #include <string>
 #include "crow.h"
 #include "filenumbersync.hpp"
+#include "nonce.hpp"
 
 #define BEHIND_PROXY false
 
@@ -15,6 +16,7 @@ std::string request_ip(const crow::request &req) {
 
 int main() {
     auto views = std::make_shared<FileNumberSync>("./views.txt");
+    auto nonce = std::make_shared<Nonce>(4); // 65536
 
     crow::SimpleApp app;
 
@@ -29,10 +31,11 @@ int main() {
         return response;
     });
 
-    CROW_ROUTE(app, "/count")([views]() {
+    CROW_ROUTE(app, "/count")([views, nonce]() {
         uint64_t count = views->value();
         crow::json::wvalue response({
-            {"count", count}
+            {"count", count},
+            {"challenge", nonce->issueChallenge()}
         });
         
         return response;
