@@ -5,6 +5,7 @@
 #include "nonce.hpp"
 
 #define BEHIND_PROXY false
+#define DEVHOST true
 
 std::string request_ip(const crow::request &req) {
     if(BEHIND_PROXY) {
@@ -16,9 +17,15 @@ std::string request_ip(const crow::request &req) {
 
 int main() {
     auto views = std::make_shared<FileNumberSync>("./views.txt");
-    auto nonce = std::make_shared<Nonce>(4); // 65536
+    auto nonce = std::make_shared<Nonce>(4); // last 3 hex 0
 
     crow::SimpleApp app;
+
+    if(DEVHOST) {
+        app.static_file("/", "web/test.html");
+        app.static_file("/hash.js", "web/hash.js");
+        app.static_file("/visitcount.js", "web/visitcount.js");
+    }
 
     CROW_ROUTE(app, "/increment").methods("POST"_method)([views, nonce](const crow::request &req) {
         crow::json::wvalue response({

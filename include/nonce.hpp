@@ -8,7 +8,7 @@
 #define CHALLENGE_LIFETIME_SECONDS 15
 #define CHALLENGE_CLEAN_PERIOD 15
 // low because we're not going to ask for a 32 zero hash are we?
-#define NONCE_MAXSIZE 16
+#define NONCE_MAXSIZE 32
 #define NONCE_INPUT_MAXSIZE NONCE_MAXSIZE + CHALLENGE_LENGTH + 1
 
 class Nonce {
