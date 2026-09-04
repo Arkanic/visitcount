@@ -1,6 +1,7 @@
 #include <sstream>
 #include "nonce.hpp"
 #include "SHA256.h"
+#include "crow.h"
 
 Nonce::Nonce(unsigned char diff) {
     difficulty = diff;
@@ -9,9 +10,13 @@ Nonce::Nonce(unsigned char diff) {
     if(!urandom) {
         throw std::runtime_error("Failed to open /dev/urandom");
     }
+    lastClean = std::chrono::steady_clock::now();
 }
 
 std::string Nonce::issueChallenge() {
+    // first we clean old cache
+    cleanIssuedChallenges();
+
     std::string challenge;
     while(challenge.size() < CHALLENGE_LENGTH) {
         char byte;
@@ -24,6 +29,8 @@ std::string Nonce::issueChallenge() {
             throw std::runtime_error("failed to fetch byte from urandom");
         }
     }
+
+    issuedChallenges.insert({challenge, std::chrono::steady_clock::now()});
 
     return challenge;
 }
@@ -61,9 +68,22 @@ bool Nonce::validateResponse(std::string nonce) {
         i--;
     }
 
+    deleteChallenge(challenge);
+
     return trailingZeroes >= difficulty;
 }
 
 void Nonce::deleteChallenge(std::string challenge) {
     issuedChallenges.erase(challenge);
+}
+
+void Nonce::cleanIssuedChallenges() {
+    if(lastClean + std::chrono::seconds(CHALLENGE_CLEAN_PERIOD) > std::chrono::steady_clock::now()) return;
+
+    for(auto challenge = issuedChallenges.begin(); challenge != issuedChallenges.end(); ) {
+        if(challenge->second + std::chrono::seconds(CHALLENGE_LIFETIME_SECONDS) < std::chrono::steady_clock::now())
+            challenge = issuedChallenges.erase(challenge);
+        else
+            challenge++;
+    }
 }

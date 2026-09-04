@@ -43,7 +43,10 @@ void FileNumberSync::writeCheck() {
     auto now = std::chrono::steady_clock::now();
     if(last.time_since_epoch() + std::chrono::seconds(SEC_BETWEEN_FILESYNC) > now.time_since_epoch()) return;
     last = now;
+    forceSave();
+}
 
+void FileNumberSync::forceSave() {
     std::ofstream file(filepath);
     if(!file.is_open()) {
         throw std::runtime_error("Could not open fileNumberSync file");

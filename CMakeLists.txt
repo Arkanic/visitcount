@@ -22,6 +22,10 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Sha256)
 
 add_executable(visitcount)
+target_compile_features(visitcount
+    PRIVATE
+        cxx_std_20
+)
 target_sources(visitcount
     PRIVATE
         src/main.cpp

@@ -20,22 +20,38 @@ int main() {
 
     crow::SimpleApp app;
 
-    CROW_ROUTE(app, "/increment")([](const crow::request &req) {
+    CROW_ROUTE(app, "/increment").methods("POST"_method)([views, nonce](const crow::request &req) {
         crow::json::wvalue response({
-            {"success", true},
-            {"views", 843776}
+            {"success", false},
+            {"message", "bad request"}
         });
-        response["success"] = false;
-        response["ip"] = request_ip(req);
+
+        auto reqjson = crow::json::load(req.body);
+        if(!reqjson || !reqjson.has("nonce")) return crow::response(400, response);
+        std::string rawNonce = reqjson["nonce"].s();
+        if(rawNonce.size() > NONCE_INPUT_MAXSIZE) return crow::response(400, response);
+
+        bool nonceCorrect = nonce->validateResponse(rawNonce);
+        if(!nonceCorrect) {
+            response["message"] = "invalid nonce";
+            return crow::response(400, response);
+        }
+
+        // they did it!
+        views->increment();
+
+        response["success"] = true;
+        response["message"] = "";
         
-        return response;
+        return crow::response(200, response);
     });
 
     CROW_ROUTE(app, "/count")([views, nonce]() {
         uint64_t count = views->value();
         crow::json::wvalue response({
             {"count", count},
-            {"challenge", nonce->issueChallenge()}
+            {"challenge", nonce->issueChallenge()},
+            {"difficulty", nonce->getDifficulty()}
         });
         
         return response;

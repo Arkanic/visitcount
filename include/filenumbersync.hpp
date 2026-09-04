@@ -15,4 +15,5 @@ class FileNumberSync {
         unsigned long long value();
         void increment();
         void decrement();
+        void forceSave();
 };
