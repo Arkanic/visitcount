@@ -15,8 +15,14 @@ std::string request_ip(const crow::request &req) {
     }
 }
 
-int main() {
-    auto views = std::make_shared<FileNumberSync>("./views.txt");
+int main(int argc, char **argv) {
+    if(argc < 3) {
+        std::cout << "Not enough args!\nUsage: " << std::quoted(argv[0]) << " <file> <port>\n";
+        std::exit(1);
+    }
+
+    std::string syncpath = std::format("{}", argv[1]);
+    auto views = std::make_shared<FileNumberSync>(syncpath);
     auto nonce = std::make_shared<Nonce>(4); // last 3 hex 0
 
     crow::SimpleApp app;
@@ -64,7 +70,8 @@ int main() {
         return response;
     });
 
-    app.port(8080).multithreaded().run();
+    std::string portstr = std::format("{}", argv[2]);
+    app.port(std::stoi(portstr)).multithreaded().run();
 
     static auto s_views = views;
     std::atexit([]() {
