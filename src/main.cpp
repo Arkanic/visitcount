@@ -65,4 +65,10 @@ int main() {
     });
 
     app.port(8080).multithreaded().run();
+
+    static auto s_views = views;
+    std::atexit([]() {
+        std::cout << "Exiting...\n";
+        s_views->forceSave();
+    });
 }
