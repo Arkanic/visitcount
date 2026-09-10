@@ -9,6 +9,14 @@ const incrementPath = "/increment";
     }
     const countData = await countResponse.json();
     console.log(countData.count);
+
+    const evt = new CustomEvent("countdata", {
+        detail: {
+            count: countData.count,
+            difficulty: countData.difficulty
+        }
+    });
+    document.dispatchEvent(evt);
     
     // now work on incrementing amount through webworker
     if(!window.Worker) return;
