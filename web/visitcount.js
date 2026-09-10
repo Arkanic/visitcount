@@ -16,7 +16,8 @@ const incrementPath = "/increment";
 
     nonceWorker.addEventListener("message", async e => {
         const nonceres = e.data;
-        console.log(`viewcount hash complete, took ${(nonceres.time / 1000).toFixed(3)}s`);
+        // funny math, ms is second / 1000 so H / ms = kH/s
+        console.log(`viewcount hash complete, took ${(nonceres.time / 1000).toFixed(3)}s, cycled ${nonceres.count} times, ${(nonceres.count / nonceres.time).toFixed(2)}kH/s`);
         // nonce calculated successfully, time to submit result
         const incrementResponse = await fetch(incrementPath, {
             method: "POST",
@@ -30,8 +31,10 @@ const incrementPath = "/increment";
         });
         const incrementData = await incrementResponse.json();
         if(!incrementResponse.ok) {
-            throw new Error(`nonce check failed, ${incrementData}`);
+            throw new Error(`nonce check failed, provided "${nonceres.nonce}", got ${JSON.stringify(incrementData)}`);
         }
+
+        nonceWorker.terminate();
     });
 
     nonceWorker.postMessage({

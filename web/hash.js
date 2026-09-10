@@ -1,7 +1,20 @@
+const charMap = [];
+
+onconnect = e => {
+    console.log("connected");
+}
+
 onmessage = async e => {
     const challenge = e.data.challenge;
     const difficulty = e.data.difficulty;
     const groupsize = 16;
+
+    if(charMap.length == 0) {
+        // generate num -> char table
+        for(let i = 0; i < 256; i++) {
+            charMap.push(i.toString(16).padStart(2, "0"));
+        }
+    }
 
     let success = "";
     let counter = 0;
@@ -19,22 +32,31 @@ onmessage = async e => {
 
     const response = {
         nonce: success,
+        count: counter,
         time: finish - start
     }
     postMessage(response);
 }
 
+async function sha256(msg) {
+    const msgbuf = new TextEncoder().encode(msg);
+    const buf = await crypto.subtle.digest("SHA-256", msgbuf);
+    const arr = Array.from(new Uint8Array(buf));
+    const hex = arr.map(x => charMap[x]).join("");
+
+    return hex;
+}
+
 async function doublesha(str, difficulty) {
-    const msg = new TextEncoder().encode(str);
-    let hash = await crypto.subtle.digest("SHA-256", msg);
-    hash = new Uint8Array(await crypto.subtle.digest("SHA-256", hash)); // 2nd round
+    // as it turns out, the crypto operation itself takes far longer than any string conversion,
+    // so no performance gain from doing bitwise comparison versus character equivalence...
+    const hash = await sha256(await sha256(str));
+    const length = hash.length;
 
-    const fullbytes = difficulty >> 1;
-    const length = hash.byteLength;
-    for(let i = 0; i < fullbytes; i++) {
-        if(hash[length - 1 - i] != 0) return false;
+    for(let i = length - 1; i > length - 1 - difficulty; i--) {
+        if(hash[i] != "0") return false;
     }
-    if((difficulty & 1) && (hash[length - 1 - fullbytes] & 0x0F) != 0) return false;
 
+    console.log(hash);
     return true;
 }
